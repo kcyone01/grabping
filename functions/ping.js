@@ -1,10 +1,11 @@
+// netlify/functions/ping.js
 exports.handler = async (event, context) => {
     // We use a public, reliable URL to test reachability
     const targetUrl = 'http://13.249.231.126';
 
     try {
         const start = Date.now();
-        // Standard fetch works in Netlify's Node runtime
+        // Use 'HEAD' request to minimize bandwidth; set a timeout
         const response = await fetch(targetUrl, { 
             method: 'HEAD', 
             signal: AbortSignal.timeout(2000) 
