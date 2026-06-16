@@ -1,40 +1,52 @@
 exports.handler = async (event, context) => {
-    const targetUrl = 'http://13.249.231.126'; // Your target destination
+    const targetUrl = 'http://13.249.231.126'; // Target destination to test
     
-    // 1. Measure latency to the target destination
+    // 1. Grab the client's actual public IP from incoming Netlify routing headers
+    const clientIp = event.headers['x-nf-client-connection-ip'] || event.headers['client-ip'] || '';
+    
+    // 2. Measure Server-Side Network Latency
     const start = Date.now();
-    let status = "Unreachable";
+    let pingStatus = "Unreachable";
     try {
-        // HEAD request checks if the server responds without downloading its full HTML page
+        // Send a lightweight HEAD request to check if the target machine answers
         await fetch(targetUrl, { method: 'HEAD', signal: AbortSignal.timeout(2000) });
-        status = "Online";
+        pingStatus = "Online";
     } catch (e) {
-        status = "Unreachable";
+        pingStatus = "Unreachable";
     }
     const end = Date.now();
+    const pingTime = pingStatus === "Online" ? `${end - start} ms` : "Timeout";
 
-    // 2. Safely fetch IP data server-side to prevent browser CORS and Rate Limiting (429)
-    let ipData = { ip: "Limit Exceeded/Error", org: "Unknown ISP" };
+    // 3. Fetch user geolocation data safely via server-side proxy
+    let ip = clientIp || "Unavailable";
+    let isp = "Unknown ISP";
+    
     try {
-        const ipRes = await fetch('https://ipapi.co/json/');
-        if (ipRes.ok) {
-            ipData = await ipRes.json();
+        // Query the API using the explicit client IP extracted from the network header
+        const ipApiUrl = clientIp ? `https://ipapi.co/${clientIp}/json/` : 'https://ipapi.co/json/';
+        const ipResponse = await fetch(ipApiUrl);
+        
+        if (ipResponse.ok) {
+            const ipData = await ipResponse.json();
+            ip = ipData.ip || ip;
+            isp = ipData.org || isp;
         }
     } catch (e) {
-        console.error("IP API Fetch failed:", e);
+        console.error("Backend failed to look up IP metadata:", e);
     }
 
+    // 4. Return unified JSON data structure back to the index.html page
     return {
         statusCode: 200,
-        headers: { 
+        headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "*" // Eradicates frontend CORS rules completely
         },
-        body: JSON.stringify({ 
-            status: status, 
-            time: status === "Online" ? `${end - start} ms` : "Timeout",
-            ip: ipData.ip,
-            isp: ipData.org
-        }),
+        body: JSON.stringify({
+            ip: ip,
+            isp: isp,
+            pingStatus: pingStatus,
+            pingTime: pingTime
+        })
     };
 };
