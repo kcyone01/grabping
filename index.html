@@ -7,23 +7,17 @@
     <p>Ping (Server-side): <span id="ping">Testing...</span></p>
 
     <script>
-        // 1. Fetch IP and ISP (Note: This may be blocked by CORS if not proxied)
-        fetch('https://ipapi.co/json/')
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById('ip').innerText = data.ip;
-                document.getElementById('isp').innerText = data.org;
-            })
-            .catch(() => document.getElementById('ip').innerText = "Blocked by CORS");
-
-        // 2. Fetch Ping from your Netlify Function
+        // Fetch all data from your own Netlify Function
         fetch('/.netlify/functions/ping')
             .then(r => r.json())
             .then(data => {
+                document.getElementById('ip').innerText = data.ip;
+                document.getElementById('isp').innerText = data.isp;
                 document.getElementById('ping').innerText = data.time;
             })
-            .catch(() => {
-                document.getElementById('ping').innerText = "Error loading ping";
+            .catch(err => {
+                console.error(err);
+                document.body.innerHTML += "<p style='color:red;'>Error: Function not found or unreachable.</p>";
             });
     </script>
 </body>
