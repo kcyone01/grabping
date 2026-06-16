@@ -1,9 +1,10 @@
-export const handler = async (event, context) => {
-    const targetUrl = 'http://13.249.231.126'; // Target server
+exports.handler = async (event, context) => {
+    // We use a public, reliable URL to test reachability
+    const targetUrl = 'http://13.249.231.126';
 
     try {
         const start = Date.now();
-        // We use 'HEAD' to check reachability without downloading the whole page
+        // Standard fetch works in Netlify's Node runtime
         const response = await fetch(targetUrl, { 
             method: 'HEAD', 
             signal: AbortSignal.timeout(2000) 
@@ -12,11 +13,19 @@ export const handler = async (event, context) => {
 
         return {
             statusCode: 200,
+            headers: { 
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*" 
+            },
             body: JSON.stringify({ status: "Online", time: `${end - start} ms` }),
         };
     } catch (error) {
         return {
             statusCode: 200,
+            headers: { 
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*" 
+            },
             body: JSON.stringify({ status: "Unreachable", time: "Timeout/Error" }),
         };
     }

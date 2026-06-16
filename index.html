@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Network Dashboard</title>
+</head>
 <body>
     <h3>Network Dashboard</h3>
     <p>Public IP: <span id="ip">Loading...</span></p>
@@ -7,18 +11,23 @@
     <p>Ping (Server-side): <span id="ping">Testing...</span></p>
 
     <script>
+        // 1. Fetch IP and ISP
         fetch('https://ipapi.co/json/')
             .then(r => r.json())
             .then(data => {
                 document.getElementById('ip').innerText = data.ip;
                 document.getElementById('isp').innerText = data.org;
-            });
+            })
+            .catch(() => document.getElementById('ip').innerText = "Failed");
 
-        // The path /.netlify/functions/ping is the default for Netlify
+        // 2. Fetch Ping from Netlify Function
         fetch('/.netlify/functions/ping')
             .then(r => r.json())
             .then(data => {
                 document.getElementById('ping').innerText = data.time;
+            })
+            .catch(() => {
+                document.getElementById('ping').innerText = "Error loading ping";
             });
     </script>
 </body>
