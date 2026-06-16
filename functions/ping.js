@@ -1,6 +1,6 @@
 // netlify/functions/ping.js
 exports.handler = async (event, context) => {
-    const targetUrl = 'http://13.249.231.126'; // Target server to ping
+    const targetUrl = 'http://13.249.231.126';
     
     // 1. Measure latency to the target
     const start = Date.now();
