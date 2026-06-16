@@ -6,79 +6,59 @@
     <title>Network Dashboard</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
         }
-        .dashboard {
+        .card {
             background: white;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 400px;
+            max-width: 350px;
         }
-        h2 {
-            margin-top: 0;
-            color: #1a73e8;
-            border-bottom: 2px solid #f0f2f5;
-            padding-bottom: 10px;
-        }
-        .metric {
-            margin: 15px 0;
-            font-size: 16px;
-            color: #444;
-        }
-        .value {
-            font-weight: 600;
-            color: #111;
-            float: right;
-        }
-        .status-loading { color: #888; }
-        .status-error { color: #d93025; }
+        h3 { margin-top: 0; color: #0076d6; border-bottom: 2px solid #eaeaea; padding-bottom: 10px; }
+        p { font-size: 16px; margin: 15px 0; display: flex; justify-content: space-between; }
+        span { font-weight: bold; color: #444; }
+        .error { color: #d93025; }
     </style>
 </head>
 <body>
 
-    <div class="dashboard">
-        <h2>Network Dashboard</h2>
-        <div class="metric">Public IP: <span id="ip" class="value status-loading">Loading...</span></div>
-        <div class="metric">ISP: <span id="isp" class="value status-loading">Loading...</span></div>
-        <div class="metric">Ping (Server-side): <span id="ping" class="value status-loading">Testing...</span></div>
+    <div class="card">
+        <h3>Network Dashboard</h3>
+        <p>Public IP: <span id="ip">Loading...</span></p>
+        <p>ISP: <span id="isp">Loading...</span></p>
+        <p>Ping (Server-side): <span id="ping">Testing...</span></p>
     </div>
 
     <script>
-        // Request all combined network data from your Netlify serverless backend
+        // Request the aggregated network data from your Netlify serverless function
         fetch('/.netlify/functions/ping')
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`Server returned HTTP status ${response.status}`);
+                    throw new Error('Function returned 404 or server failure');
                 }
                 return response.json();
             })
             .then(data => {
-                // Update frontend fields with real data
                 document.getElementById('ip').innerText = data.ip;
-                document.getElementById('ip').className = "value";
-                
                 document.getElementById('isp').innerText = data.isp;
-                document.getElementById('isp').className = "value";
-                
-                document.getElementById('ping').innerText = `${data.pingTime} (${data.pingStatus})`;
-                document.getElementById('ping').className = "value";
+                document.getElementById('ping').innerText = data.time;
             })
-            .catch(error => {
-                console.error("Dashboard Fetch Error:", error);
+            .catch(err => {
+                console.error(err);
                 document.getElementById('ip').innerText = "Error";
-                document.getElementById('ip').className = "value status-error";
+                document.getElementById('ip').className = "error";
                 document.getElementById('isp').innerText = "Error";
-                document.getElementById('isp').className = "value status-error";
-                document.getElementById('ping').innerText = "Deployment Setup Error (404)";
-                document.getElementById('ping').className = "value status-error";
+                document.getElementById('isp').className = "error";
+                document.getElementById('ping').innerText = "Setup Error (404)";
+                document.getElementById('ping').className = "error";
             });
     </script>
 
