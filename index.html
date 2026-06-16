@@ -51,7 +51,7 @@
             font-size: 14px;
         }
         button {
-            background-color: #00b14f; /* Grab Green */
+            background-color: #00b14f;
             color: white;
             border: none;
             padding: 8px 16px;
@@ -86,13 +86,12 @@
         </div>
         
         <div class="note">
-            <strong>How this works:</strong> This sends a secure request directly from your browser to Grab's Help Center. It measures the exact round-trip time it takes for your computer to reach their server and get a response.
+            <strong>How it works:</strong> This triggers a real network request directly from your browser to Grab's servers, tracking the exact round-trip latency in milliseconds.
         </div>
     </div>
 
     <script>
         // 1. Fetch IP and ISP directly from the client side
-        // This avoids shared server-side rate limits since visitors use their own connection
         fetch('https://freeipapi.com/api/json')
             .then(r => r.json())
             .then(data => {
@@ -100,7 +99,6 @@
                 document.getElementById('isp').innerText = data.isp || "N/A";
             })
             .catch(() => {
-                // Fallback provider if the first API fails
                 fetch('https://ipapi.co/json/')
                     .then(r => r.json())
                     .then(data => {
@@ -119,14 +117,11 @@
             if (!target) return;
 
             document.getElementById('ping').innerText = "Testing...";
-
             const start = performance.now();
-            
-            // Append a unique timestamp query parameter to bypass browser caching
             const cacheBuster = target + (target.includes('?') ? '&' : '?') + 'tbust=' + Date.now();
 
             fetch(cacheBuster, { 
-                mode: 'no-cors', // Bypasses browser CORS blocks for network timing calculations
+                mode: 'no-cors', 
                 cache: 'no-store',
                 credentials: 'omit'
             })
@@ -135,14 +130,11 @@
                 document.getElementById('ping').innerText = Math.round(duration) + ' ms';
             })
             .catch(() => {
-                // Even if the request is technically blocked by Grab's firewall or CORS, 
-                // the network packet still completed its round trip, giving an accurate latency measurement.
                 const duration = performance.now() - start;
                 document.getElementById('ping').innerText = Math.round(duration) + ' ms';
             });
         }
 
-        // Auto-trigger the first ping automatically when the dashboard opens
         window.onload = () => {
             setTimeout(measurePing, 500);
         };
