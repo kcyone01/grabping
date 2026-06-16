@@ -1,26 +1,39 @@
-// netlify/functions/ping.js
-const { exec } = require("child_process");
+const net = require('net');
 
 exports.handler = async (event, context) => {
-    // Note: 'ping' command availability can vary by environment. 
-    // This uses a standard Linux ping execution.
+    const targetIp = '13.249.231.126';
+    const port = 80; // Assuming HTTP. Change to 443 for HTTPS or any relevant port.
+
     return new Promise((resolve) => {
-        exec("ping -c 1 13.249.231.126", (error, stdout) => {
-            if (error) {
-                resolve({
-                    statusCode: 200,
-                    body: JSON.stringify({ status: "Unreachable", time: "N/A" }),
-                });
-                return;
-            }
-            const match = stdout.match(/time=([\d.]+)/);
+        const start = Date.now();
+        const socket = new net.Socket();
+        
+        socket.setTimeout(2000); // 2-second timeout
+
+        socket.on('connect', () => {
+            const end = Date.now();
+            socket.destroy();
             resolve({
                 statusCode: 200,
-                body: JSON.stringify({ 
-                    status: "Online", 
-                    time: match ? `${match[1]} ms` : "Success" 
-                }),
+                body: JSON.stringify({ status: "Online", time: `${end - start} ms` }),
             });
         });
+
+        socket.on('timeout', () => {
+            socket.destroy();
+            resolve({
+                statusCode: 200,
+                body: JSON.stringify({ status: "Unreachable", time: "Timeout" }),
+            });
+        });
+
+        socket.on('error', () => {
+            resolve({
+                statusCode: 200,
+                body: JSON.stringify({ status: "Unreachable", time: "Error" }),
+            });
+        });
+
+        socket.connect(port, targetIp);
     });
 };
