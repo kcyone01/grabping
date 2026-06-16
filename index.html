@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h3>Network Dashboard</h3>
+    <p>Public IP: <span id="ip">Loading...</span></p>
+    <p>ISP: <span id="isp">Loading...</span></p>
+    <p>Ping (Server-side): <span id="ping">Testing...</span></p>
+
+    <script>
+        fetch('https://ipapi.co/json/')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('ip').innerText = data.ip;
+                document.getElementById('isp').innerText = data.org;
+            });
+
+        // The path /.netlify/functions/ping is the default for Netlify
+        fetch('/.netlify/functions/ping')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('ping').innerText = data.time;
+            });
+    </script>
+</body>
+</html>
