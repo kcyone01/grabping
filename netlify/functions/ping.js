@@ -1,3 +1,4 @@
+// netlify/functions/ping.js
 exports.handler = async (event, context) => {
     const targetUrl = 'http://13.249.231.126'; // Target node
     
@@ -16,21 +17,27 @@ exports.handler = async (event, context) => {
     const end = Date.now();
     const pingTime = status === "Online" ? `${end - start} ms` : "Timeout";
 
-    // 3. Process IP metadata proxying safely
+    // 3. Process IP metadata proxying safely using ip-api.com
     let ip = clientIp || "Unavailable";
     let isp = "Unknown ISP";
-    try {
-        const ipApiUrl = clientIp ? `https://ipapi.co/${clientIp}/json/` : 'https://ipapi.co/json/';
-        const ipResponse = await fetch(ipApiUrl);
-        if (ipResponse.ok) {
-            const ipData = await ipResponse.json();
-            ip = ipData.ip || ip;
-            isp = ipData.org || isp;
+    
+    if (clientIp && clientIp !== '127.0.0.1' && clientIp !== '::1') {
+        try {
+            // We use HTTP here because ip-api.com allows unlimited server-side requests over HTTP
+            const ipResponse = await fetch(`http://ip-api.com/json/${clientIp}`);
+            if (ipResponse.ok) {
+                const ipData = await ipResponse.json();
+                if (ipData.status === "success") {
+                    ip = ipData.query || ip;
+                    isp = ipData.isp || ipData.org || isp;
+                }
+            }
+        } catch (e) {
+            console.error("Backend failed to query alternative IP lookup:", e);
         }
-    } catch (e) {
-        console.error("Failed to query IP api lookup context:", e);
     }
 
+    // 4. Return unified JSON data structure back to the index.html page
     return {
         statusCode: 200,
         headers: {
